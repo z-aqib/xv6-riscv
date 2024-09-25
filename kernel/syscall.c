@@ -1,4 +1,5 @@
-#include "types.h"
+#include "kernel/types.h"
+#include "kernel/stat.h"
 #include "param.h"
 #include "memlayout.h"
 #include "riscv.h"
@@ -6,6 +7,34 @@
 #include "proc.h"
 #include "syscall.h"
 #include "defs.h"
+
+void print_syscall(int num); // function defined here
+
+// names of each system call stored in an array
+const char *syscall_names[] = {
+  "SYS_fork", 	// 1
+  "SYS_exit", 	// 2
+  "SYS_wait", 	// 3
+  "SYS_pipe", 	// 4
+  "SYS_read", 	// 5
+  "SYS_kill", 	// 6
+  "SYS_exec", 	// 7
+  "SYS_fstat", 	// 8
+  "SYS_chdir", 	// 9
+  "SYS_dup", 	// 10
+  "SYS_getpid", // 11
+  "SYS_sbrk", 	// 12
+  "SYS_sleep", 	// 13
+  "SYS_uptime", // 14
+  "SYS_open", 	// 15
+  "SYS_write", 	// 16
+  "SYS_mknod", 	// 17
+  "SYS_unlink", // 18
+  "SYS_link", 	// 19
+  "SYS_mkdir",  // 20
+  "SYS_close", 	// 21
+  "SYS_count"	// 22
+};
 
 // Fetch the uint64 at addr from the current process.
 int
@@ -101,6 +130,7 @@ extern uint64 sys_unlink(void);
 extern uint64 sys_link(void);
 extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
+extern uint64 sys_count(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -126,6 +156,7 @@ static uint64 (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_count]   sys_count,
 };
 
 void
@@ -138,10 +169,22 @@ syscall(void)
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     // Use num to lookup the system call function for num, call it,
     // and store its return value in p->trapframe->a0
+
+    // if its a write() system call, do not include it in your system call count
+    if (num != 16){
+      print_syscall(num); // print which syscall is being done
+      p->syscall_count++; // increment system call count
+    }
     p->trapframe->a0 = syscalls[num]();
   } else {
     printf("%d %s: unknown sys call %d\n",
             p->pid, p->name, num);
     p->trapframe->a0 = -1;
   }
+}
+
+// this function will print which system call is being called
+void
+print_syscall(int num) {
+  printf(" %s \n", syscall_names[num]);
 }

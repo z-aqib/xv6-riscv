@@ -6,6 +6,8 @@
 #include "spinlock.h"
 #include "proc.h"
 
+extern int syscall_count;
+
 uint64
 sys_exit(void)
 {
@@ -90,4 +92,10 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+// system call counter
+uint64
+sys_count(void) {
+  return myproc()->syscall_count;
 }
